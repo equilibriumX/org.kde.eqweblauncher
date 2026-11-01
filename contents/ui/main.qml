@@ -1,20 +1,20 @@
-/*************************************************************************** *
- *   Copyright 2026 by Barnak Zlatko <zlatkobarnak@equilibriumos.com>          *
- *                                                                           *
- *   This program is free software; you can redistribute it and/or modify    *
- *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation; either version 2 of the License, or       *
- *   (at your option) any later version.                                     *
- *                                                                           *
- *   This program is distributed in the hope that it will be useful,         *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- *   GNU General Public License for more details.                            *
- *                                                                           *
- *   You should have received a copy of the GNU General Public License       *
- *   along with this program; if not, write to the                           *
- *   Free Software Foundation, Inc.,                                         *
- *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .          *
+/***************************************************************************
+ *   Copyright 2026 by Barnak Zlatko <zlatkobarnak@equilibriumos.com>      *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************/
 
 import QtQuick
@@ -31,7 +31,7 @@ PlasmoidItem {
 
     preferredRepresentation: compactRepresentation
 
-    // 1. KOMPAKTAN PRIKAZ NA PANELU
+    // 1. KOMPAKTAN PRIKAZ NA PANELU (BEZ TOOLTIP-OVA)
     compactRepresentation: Item {
         id: compactContainer
         Layout.minimumWidth: compactLayout.implicitWidth > 0 ? compactLayout.implicitWidth : units.iconSizes.large
@@ -93,8 +93,6 @@ PlasmoidItem {
                         width: 24
                         height: 24
                         icon.name: "window-minimize-panel"
-                        ToolTip.text: "Minimize All Web Apps"
-                        ToolTip.visible: minAllMouse.containsMouse
                         onClicked: {
                             for (var i = 0; i < activeAppsModel.count; i++) {
                                 var win = activeAppsModel.get(i).windowRef;
@@ -138,11 +136,6 @@ PlasmoidItem {
                             fillMode: Image.PreserveAspectFit
                             smooth: true
                         }
-
-                        ToolTip.text: model.name
-                        ToolTip.visible: activeMouse.containsMouse
-                        ToolTip.delay: 250
-                        y: -42
                     }
 
                     MouseArea {
@@ -299,7 +292,7 @@ PlasmoidItem {
                 Layout.fillHeight: true
                 spacing: 10
 
-                // Polje za pretragu sa 20% leve margine, bez ruba, veće visine i jače zaobljeno
+                // Polje za pretragu - popravljeno pozicioniranje teksta unutar okvira
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 4
@@ -313,14 +306,16 @@ PlasmoidItem {
                         id: searchInput
                         placeholderText: "Search applications..."
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 36 // Povećana visina
+                        Layout.preferredHeight: 36
+                        leftPadding: 14
+                        rightPadding: 14
+                        verticalAlignment: Text.AlignVCenter
 
-                        // Uklanjanje klasičnog ruba i pravljenje jedva primetnog, jače zaobljenog polja
                         background: Rectangle {
                             color: searchInput.activeFocus ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03)
                             border.color: searchInput.activeFocus ? Qt.rgba(56, 189, 248, 0.4) : "transparent"
                             border.width: 1
-                            radius: 18 // Jače zaobljene ivice
+                            radius: 18
                         }
 
                         onTextChanged: {
