@@ -1,20 +1,20 @@
-/***************************************************************************            *
- *   Copyright 2026 by Barnak Zlatko <zlatkobarnak@equilibriumos.com>             *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
+/*************************************************************************** *
+ *   Copyright 2026 by Barnak Zlatko <zlatkobarnak@equilibriumos.com>          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program; if not, write to the                           *
+ *   Free Software Foundation, Inc.,                                         *
+ *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .          *
  ***************************************************************************/
 
 import QtQuick
@@ -31,7 +31,7 @@ PlasmoidItem {
 
     preferredRepresentation: compactRepresentation
 
-    // 1. KOMPAKTAN PRIKAZ NA PANELU (Glavna ikona + "Minimize All" + velike ikone aplikacija bez margina)
+    // 1. KOMPAKTAN PRIKAZ NA PANELU
     compactRepresentation: Item {
         id: compactContainer
         Layout.minimumWidth: compactLayout.implicitWidth > 0 ? compactLayout.implicitWidth : units.iconSizes.large
@@ -44,7 +44,6 @@ PlasmoidItem {
             anchors.centerIn: parent
             spacing: 2
 
-            // Glavna ikona (eq-wal.svg) - velika, bez margina
             Item {
                 Layout.preferredWidth: 40
                 Layout.preferredHeight: 40
@@ -75,7 +74,6 @@ PlasmoidItem {
                 }
             }
 
-            // DUGME: Minimize All na panelu
             Item {
                 visible: activeAppsModel.count > 0
                 Layout.preferredWidth: visible ? 30 : 0
@@ -116,7 +114,6 @@ PlasmoidItem {
                 }
             }
 
-            // Otvorene web aplikacije na panelu - maksimizovane bez margina
             Repeater {
                 model: activeAppsModel
 
@@ -141,6 +138,11 @@ PlasmoidItem {
                             fillMode: Image.PreserveAspectFit
                             smooth: true
                         }
+
+                        ToolTip.text: model.name
+                        ToolTip.visible: activeMouse.containsMouse
+                        ToolTip.delay: 250
+                        y: -42
                     }
 
                     MouseArea {
@@ -162,15 +164,20 @@ PlasmoidItem {
         }
     }
 
-    // 2. PROŠIRENI PRIKAZ (Meni sa levom trakom i desnom listom sačuvanih)
+    // 2. PROŠIRENI PRIKAZ (Meni)
     fullRepresentation: PlasmaExtras.Representation {
         Layout.minimumWidth: 540
-        Layout.minimumHeight: 580
+        Layout.minimumHeight: 600
+
+        onVisibleChanged: {
+            if (!visible && searchInput) {
+                searchInput.text = "";
+            }
+        }
 
         contentItem: RowLayout {
             spacing: 12
 
-            // LEVA STRANA: Vertikalna traka sa aktivnim aplikacijama + Minimize All na dnu
             ColumnLayout {
                 Layout.fillHeight: true
                 Layout.preferredWidth: 48
@@ -187,7 +194,6 @@ PlasmoidItem {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true
-
                     contentWidth: availableWidth
 
                     ColumnLayout {
@@ -240,7 +246,6 @@ PlasmoidItem {
                     }
                 }
 
-                // DUGME: Minimize All na dnu leve strane u meniju
                 Item {
                     visible: activeAppsModel.count > 0
                     Layout.alignment: Qt.AlignHCenter
@@ -282,7 +287,6 @@ PlasmoidItem {
                 }
             }
 
-            // Vertikalna linija razdvajanja
             Rectangle {
                 Layout.fillHeight: true
                 Layout.preferredWidth: 1
@@ -290,11 +294,51 @@ PlasmoidItem {
                 opacity: 0.3
             }
 
-            // DESNA STRANA: Glavni sadržaj (Lista sačuvanih aplikacija + Forma za dodavanje)
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: 12
+                spacing: 10
+
+                // Polje za pretragu sa 20% leve margine, bez ruba, veće visine i jače zaobljeno
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    Item {
+                        Layout.preferredWidth: parent.width * 0.20
+                        Layout.preferredHeight: 1
+                    }
+
+                    PlasmaComponents.TextField {
+                        id: searchInput
+                        placeholderText: "Search applications..."
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 36 // Povećana visina
+
+                        // Uklanjanje klasičnog ruba i pravljenje jedva primetnog, jače zaobljenog polja
+                        background: Rectangle {
+                            color: searchInput.activeFocus ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03)
+                            border.color: searchInput.activeFocus ? Qt.rgba(56, 189, 248, 0.4) : "transparent"
+                            border.width: 1
+                            radius: 18 // Jače zaobljene ivice
+                        }
+
+                        onTextChanged: {
+                            webAppsModel.sync();
+                        }
+                    }
+
+                    PlasmaComponents.Button {
+                        visible: searchInput.text.trim() !== ""
+                        Layout.preferredWidth: 32
+                        Layout.preferredHeight: 36
+                        icon.name: "edit-clear"
+                        ToolTip.text: "Clear search"
+                        onClicked: {
+                            searchInput.text = "";
+                        }
+                    }
+                }
 
                 PlasmaComponents.Label {
                     text: "Saved Applications:"
@@ -305,7 +349,6 @@ PlasmoidItem {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true
-
                     contentWidth: availableWidth
 
                     Flow {
@@ -318,13 +361,14 @@ PlasmoidItem {
 
                             delegate: Item {
                                 id: tileItem
-                                width: Math.max(120, Math.min(200, (model.name.length * 10) + 75))
-                                height: 100
+                                readonly property bool matches: searchInput.text.trim() === "" || model.name.toLowerCase().indexOf(searchInput.text.trim().toLowerCase()) !== -1
+                                visible: matches
+                                width: matches ? Math.max(120, Math.min(200, (model.name.length * 10) + 75)) : 0
+                                height: matches ? 100 : 0
 
                                 Rectangle {
                                     id: tileRect
                                     anchors.fill: parent
-
                                     radius: 12
                                     border.color: Qt.lighter(getTileColor(model.name), 1.4)
                                     border.width: mouseArea.containsMouse ? 2 : 1
@@ -395,9 +439,7 @@ PlasmoidItem {
                                     anchors.bottom: parent.bottom
                                     anchors.margins: 4
                                     z: 10
-
                                     icon.name: "edit-delete"
-
                                     onClicked: {
                                         removeWebApp(model.url);
                                     }
@@ -409,7 +451,7 @@ PlasmoidItem {
 
                 Item {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 16
+                    Layout.preferredHeight: 12
 
                     Rectangle {
                         anchors.centerIn: parent
@@ -476,13 +518,8 @@ PlasmoidItem {
         }
     }
 
-    ListModel {
-        id: webAppsModel
-    }
-
-    ListModel {
-        id: activeAppsModel
-    }
+    ListModel { id: webAppsModel }
+    ListModel { id: activeAppsModel }
 
     WebEngineProfile {
         id: sharedWebProfile
@@ -528,7 +565,6 @@ PlasmoidItem {
                 settings.localStorageEnabled: true
                 settings.javascriptEnabled: true
 
-                // Automatsko hvatanje linkova koji se otvaraju u novom prozoru/tabu
                 onNewWindowRequested: function(request) {
                     openInWindow(request.requestedUrl.toString(), windowTitle + " (Pop-up)", windowIcon);
                     request.openIn(null);
@@ -604,6 +640,7 @@ PlasmoidItem {
                 break;
             }
         }
+        sortAlphabetically();
         saveConfiguration();
     }
 
