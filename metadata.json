@@ -1,0 +1,21 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "KPlugin": {
+        "Id": "org.kde.eqweblauncher",
+        "Name": "EQ-wal (Web App Launcher)",
+        "Comment": "Dynamic launching of web applications in separate windows",
+        "Icon": "applications-internet",
+        "Authors": [
+            {
+                "Email": "apps@equilibriumos.com",
+                "Name": "Barnak Zlatko",
+                "Project": "EQuilibriumOS"
+
+            }
+        ],
+        "Version": "2.2.0",
+        "Category": "Utilities",
+        "License": "GPL-2.0+"
+    }
+}
