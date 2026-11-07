@@ -31,7 +31,7 @@ PlasmoidItem {
 
     preferredRepresentation: compactRepresentation
 
-    // 1. KOMPAKTAN PRIKAZ NA PANELU (BEZ TOOLTIP-OVA)
+    // 1. KOMPAKTAN PRIKAZ NA PANELU
     compactRepresentation: Item {
         id: compactContainer
         Layout.minimumWidth: compactLayout.implicitWidth > 0 ? compactLayout.implicitWidth : units.iconSizes.large
@@ -74,6 +74,77 @@ PlasmoidItem {
                 }
             }
 
+            // Drop zona na panelu za brzi dodatak u favorite prevlačenjem
+            DropArea {
+                id: panelDropArea
+                Layout.preferredWidth: favoritesRepeater.count > 0 ? (favoritesRepeater.count * 42) : 0
+                Layout.preferredHeight: 40
+                Layout.minimumWidth: visible ? implicitWidth : 0
+                Layout.minimumHeight: 40
+                visible: favoritesRepeater.count > 0
+                keys: ["web-app-url"]
+
+                onDropped: (drop) => {
+                    if (drop.hasText) {
+                        var url = drop.text;
+                        for (var i = 0; i < webAppsModel.count; i++) {
+                            var item = webAppsModel.get(i);
+                            if (item.url === url) {
+                                addFavorite(item.name, item.url, item.icon);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                RowLayout {
+                    anchors.fill: parent
+                    spacing: 2
+
+                    Repeater {
+                        id: favoritesRepeater
+                        model: favoritesModel
+
+                        delegate: Item {
+                            Layout.preferredWidth: 40
+                            Layout.preferredHeight: 40
+
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: 8
+                                color: favPanelMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.2) : Qt.rgba(1, 1, 1, 0.05)
+                                border.color: favPanelMouse.containsMouse ? "#38BDF8" : "transparent"
+                                border.width: 1
+
+                                Image {
+                                    anchors.fill: parent
+                                    anchors.margins: 4
+                                    source: model.icon || ""
+                                    fillMode: Image.PreserveAspectFit
+                                    smooth: true
+                                }
+
+                            }
+
+                            MouseArea {
+                                id: favPanelMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                onClicked: (mouse) => {
+                                    if (mouse.button === Qt.LeftButton) {
+                                        openInWindow(model.url, model.name, model.icon);
+                                    } else if (mouse.button === Qt.RightButton) {
+                                        removeFavorite(model.url);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Dugme za minimalizovanje svih prozora
             Item {
                 visible: activeAppsModel.count > 0
                 Layout.preferredWidth: visible ? 30 : 0
@@ -112,6 +183,7 @@ PlasmoidItem {
                 }
             }
 
+            // Lista aktivnih aplikacija u panelu
             Repeater {
                 model: activeAppsModel
 
@@ -159,8 +231,8 @@ PlasmoidItem {
 
     // 2. PROŠIRENI PRIKAZ (Meni)
     fullRepresentation: PlasmaExtras.Representation {
-        Layout.minimumWidth: 540
-        Layout.minimumHeight: 600
+        Layout.minimumWidth: 560
+        Layout.minimumHeight: 620
 
         onVisibleChanged: {
             if (!visible && searchInput) {
@@ -171,6 +243,7 @@ PlasmoidItem {
         contentItem: RowLayout {
             spacing: 12
 
+            // Leva kolona - Aktivne aplikacije
             ColumnLayout {
                 Layout.fillHeight: true
                 Layout.preferredWidth: 48
@@ -287,12 +360,13 @@ PlasmoidItem {
                 opacity: 0.3
             }
 
+            // Desna kolona
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: 10
 
-                // Polje za pretragu - popravljeno pozicioniranje teksta unutar okvira
+                // Polje za pretragu
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 4
@@ -331,6 +405,124 @@ PlasmoidItem {
                         ToolTip.text: "Clear search"
                         onClicked: {
                             searchInput.text = "";
+                        }
+                    }
+                }
+
+                // =========================================================
+                // NAMENSKO POLJE ZA FAVORITE U MENIJU (DROP AREA)
+                // =========================================================
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    PlasmaComponents.Label {
+                        text: "Favorites (Drop tiles here):"
+                        font.bold: true
+                        font.pointSize: 9
+                    }
+
+                    DropArea {
+                        id: favoritesDropZone
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 64
+                        keys: ["web-app-url"]
+
+                        onDropped: (drop) => {
+                            if (drop.hasText) {
+                                var url = drop.text;
+                                for (var i = 0; i < webAppsModel.count; i++) {
+                                    var item = webAppsModel.get(i);
+                                    if (item.url === url) {
+                                        addFavorite(item.name, item.url, item.icon);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            id: dropZoneRect
+                            anchors.fill: parent
+                            radius: 10
+                            color: favoritesDropZone.containsDrag ? Qt.rgba(56, 189, 248, 0.2) : Qt.rgba(1, 1, 1, 0.04)
+                            border.color: favoritesDropZone.containsDrag ? "#38BDF8" : Qt.rgba(1, 1, 1, 0.15)
+                            border.width: favoritesDropZone.containsDrag ? 2 : 1
+
+                            PlasmaComponents.Label {
+                                anchors.centerIn: parent
+                                visible: favoritesModel.count === 0
+                                text: "Drag & drop tiles here to add to Favorites"
+                                opacity: 0.4
+                                font.italic: true
+                            }
+
+                            ScrollView {
+                                anchors.fill: parent
+                                anchors.margins: 6
+                                visible: favoritesModel.count > 0
+                                clip: true
+
+                                RowLayout {
+                                    spacing: 8
+
+                                    Repeater {
+                                        model: favoritesModel
+
+                                        delegate: Item {
+                                            Layout.preferredWidth: 110
+                                            Layout.preferredHeight: 48
+
+                                            Rectangle {
+                                                anchors.fill: parent
+                                                radius: 8
+                                                color: favItemMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.2) : Qt.rgba(1, 1, 1, 0.1)
+                                                border.color: favItemMouse.containsMouse ? "#38BDF8" : "transparent"
+                                                border.width: 1
+
+                                                RowLayout {
+                                                    anchors.fill: parent
+                                                    anchors.margins: 4
+                                                    spacing: 6
+
+                                                    Image {
+                                                        source: model.icon || ""
+                                                        Layout.preferredWidth: 28
+                                                        Layout.preferredHeight: 28
+                                                        fillMode: Image.PreserveAspectFit
+                                                    }
+
+                                                    PlasmaComponents.Label {
+                                                        text: model.name
+                                                        Layout.fillWidth: true
+                                                        elide: Text.ElideRight
+                                                        font.pointSize: 9
+                                                        font.bold: true
+                                                    }
+                                                }
+                                            }
+
+                                            PlasmaComponents.Button {
+                                                width: 18
+                                                height: 18
+                                                anchors.right: parent.right
+                                                anchors.top: parent.top
+                                                anchors.margins: -2
+                                                z: 5
+                                                icon.name: "edit-delete"
+                                                onClicked: removeFavorite(model.url)
+                                            }
+
+                                            MouseArea {
+                                                id: favItemMouse
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                onClicked: openInWindow(model.url, model.name, model.icon)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -411,17 +603,44 @@ PlasmoidItem {
                                     }
                                 }
 
-                                MouseArea {
-                                    id: mouseArea
+                                // Omogućavanje Drag & Drop prevlačenja pločice
+                                Item {
+                                    id: dragTile
                                     anchors.fill: parent
-                                    hoverEnabled: true
-                                    acceptedButtons: Qt.LeftButton
-                                    propagateComposedEvents: true
 
-                                    onClicked: (mouse) => {
-                                        var inDeleteArea = (mouse.x > parent.width - 35) && (mouse.y > parent.height - 35);
-                                        if (!inDeleteArea) {
-                                            openInWindow(model.url, model.name, model.icon);
+                                    Drag.active: mouseArea.drag.active
+                                    Drag.keys: ["web-app-url"]
+                                    Drag.hotSpot.x: width / 2
+                                    Drag.hotSpot.y: height / 2
+                                    Drag.mimeData: { "text/plain": model.url }
+
+                                    MouseArea {
+                                        id: mouseArea
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        acceptedButtons: Qt.LeftButton
+                                        drag.target: dragTile
+
+                                        onReleased: (mouse) => {
+                                            dragTile.Drag.drop();
+
+                                            // Ručna provera pozicije ako sistemski DropArea u Plasma popup-u zakatači
+                                            var dropPos = dropZoneRect.mapFromItem(mouseArea, mouse.x, mouse.y);
+                                            if (dropPos.x >= 0 && dropPos.x <= dropZoneRect.width &&
+                                                dropPos.y >= 0 && dropPos.y <= dropZoneRect.height) {
+                                                addFavorite(model.name, model.url, model.icon);
+                                            }
+
+                                            dragTile.x = 0;
+                                            dragTile.y = 0;
+                                        }
+
+                                        onClicked: (mouse) => {
+                                            var inDeleteArea = (mouse.x > parent.width - 35) && (mouse.y > parent.height - 35);
+                                            var inFavArea = (mouse.x > parent.width - 35) && (mouse.y < 35);
+                                            if (!inDeleteArea && !inFavArea) {
+                                                openInWindow(model.url, model.name, model.icon);
+                                            }
                                         }
                                     }
                                 }
@@ -437,6 +656,25 @@ PlasmoidItem {
                                     icon.name: "edit-delete"
                                     onClicked: {
                                         removeWebApp(model.url);
+                                    }
+                                }
+
+                                PlasmaComponents.Button {
+                                    id: favBtn
+                                    width: 26
+                                    height: 26
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                    anchors.margins: 4
+                                    z: 10
+                                    icon.name: isFavorite(model.url) ? "rating" : "rating-unrated"
+                                    ToolTip.text: isFavorite(model.url) ? "Remove from Favorites" : "Add to Favorites"
+                                    onClicked: {
+                                        if (isFavorite(model.url)) {
+                                            removeFavorite(model.url);
+                                        } else {
+                                            addFavorite(model.name, model.url, model.icon);
+                                        }
                                     }
                                 }
                             }
@@ -514,6 +752,7 @@ PlasmoidItem {
     }
 
     ListModel { id: webAppsModel }
+    ListModel { id: favoritesModel }
     ListModel { id: activeAppsModel }
 
     WebEngineProfile {
@@ -552,9 +791,7 @@ PlasmoidItem {
                 id: webEngineView
                 anchors.fill: parent
                 url: webWin.targetUrl
-
                 profile: sharedWebProfile
-
                 settings.accelerated2dCanvasEnabled: true
                 settings.webGLEnabled: true
                 settings.localStorageEnabled: true
@@ -616,6 +853,30 @@ PlasmoidItem {
         });
     }
 
+    function isFavorite(url) {
+        for (var i = 0; i < favoritesModel.count; i++) {
+            if (favoritesModel.get(i).url === url) return true;
+        }
+        return false;
+    }
+
+    function addFavorite(name, url, icon) {
+        if (!isFavorite(url)) {
+            favoritesModel.append({ "name": name, "url": url, "icon": icon });
+            saveConfiguration();
+        }
+    }
+
+    function removeFavorite(url) {
+        for (var i = 0; i < favoritesModel.count; i++) {
+            if (favoritesModel.get(i).url === url) {
+                favoritesModel.remove(i);
+                break;
+            }
+        }
+        saveConfiguration();
+    }
+
     function addWebApp(name, url) {
         var faviconUrl = "https://www.google.com/s2/favicons?domain=" + url + "&sz=128";
 
@@ -629,6 +890,7 @@ PlasmoidItem {
     }
 
     function removeWebApp(url) {
+        removeFavorite(url);
         for (var i = 0; i < webAppsModel.count; i++) {
             if (webAppsModel.get(i).url === url) {
                 webAppsModel.remove(i);
@@ -669,6 +931,21 @@ PlasmoidItem {
             });
         }
         plasmoid.configuration.webAppsJson = JSON.stringify(listData);
+
+        var favData = [];
+        for (var k = 0; k < favoritesModel.count; k++) {
+            favData.push({
+                "name": favoritesModel.get(k).name,
+                "url": favoritesModel.get(k).url,
+                "icon": favoritesModel.get(k).icon
+            });
+        }
+        plasmoid.configuration.favoritesJson = JSON.stringify(favData);
+
+        // Eksplicitni poziv za urezivanje u KDE konfiguracioni fajl na disku
+        if (typeof plasmoid.configuration.writeConfig === "function") {
+            plasmoid.configuration.writeConfig();
+        }
     }
 
     Component.onCompleted: {
@@ -687,7 +964,24 @@ PlasmoidItem {
                 }
                 sortAlphabetically();
             } catch (e) {
-                console.error("Error parsing configuration:", e);
+                console.error("Error parsing web apps configuration:", e);
+            }
+        }
+
+        var storedFavs = plasmoid.configuration.favoritesJson;
+        if (storedFavs && storedFavs.length > 0) {
+            try {
+                var parsedFavs = JSON.parse(storedFavs);
+                favoritesModel.clear();
+                for (var j = 0; j < parsedFavs.length; j++) {
+                    favoritesModel.append({
+                        "name": parsedFavs[j].name,
+                        "url": parsedFavs[j].url,
+                        "icon": parsedFavs[j].icon
+                    });
+                }
+            } catch (e) {
+                console.error("Error parsing favorites configuration:", e);
             }
         }
     }
