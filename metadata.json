@@ -8,13 +8,13 @@
         "Icon": "applications-internet",
         "Authors": [
             {
-                "Email": "apps@equilibriumos.com",
+                "Email": "saradnja.barnak@gmail.com",
                 "Name": "Barnak Zlatko",
                 "Project": "EQuilibriumOS"
 
             }
         ],
-        "Version": "2.3.1",
+        "Version": "2.4.0",
         "Category": "Utilities",
         "License": "GPL-2.0+"
     }
