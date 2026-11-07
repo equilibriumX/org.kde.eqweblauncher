@@ -8,5 +8,8 @@
     <entry name="webAppsJson" type="String">
       <default></default>
     </entry>
+    <entry name="favoritesJson" type="String">
+      <default></default>
+    </entry>
   </group>
 </kcfg>
